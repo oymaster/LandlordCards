@@ -40,6 +40,7 @@ protected:
     void mousePressEvent(QMouseEvent *event);
 
 signals:
+    void cardSelected(Qt::MouseButton button);
 
 private:
     QPixmap m_front;
@@ -48,6 +49,7 @@ private:
     bool m_isSelected;
     Card m_card;
     Player *m_owner;
+
 
 };
 

@@ -4,7 +4,11 @@
 *.o
 *.a
 *.moc
-*.qrc
+
+
+
+build/
+
 
 # 操作系统生成的文件
 .DS_Store
@@ -12,3 +16,15 @@ Thumbs.db
 
 # IDE 临时文件
 *.user
+
+# 编译生成的文件
+*.lo
+*.la
+*.slo
+*.pdb
+*.idb
+*.ipch
+*.dSYM
+*.ilk
+*.log
+*.vs

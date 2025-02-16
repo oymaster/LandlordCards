@@ -1,4 +1,5 @@
 #include "gamepanel.h"
+#include "qdebug.h"
 #include "ui_gamepanel.h"
 #include <QPainter>
 #include <QRandomGenerator>
@@ -614,12 +615,48 @@ void GamePanel::onCardSelected(Qt::MouseButton button)
 
 void GamePanel::onUserPlayHand()
 {
-
+    if(m_gameStatus != GameControl::PlayingHand)
+    {
+        return;
+    }
+    if(m_gameCtl->getCurrentPlayer() != m_gameCtl->getUserPlayer())
+    {
+        return;
+    }
+    if(m_selectCards.isEmpty())
+    {
+        return;
+    }
+    Cards cs;
+    for(auto it = m_selectCards.begin(); it != m_selectCards.end(); ++it)
+    {
+        Card card = (*it)->getCard();
+        cs.add(card);
+    }
+    PlayHand hand(cs);
+    PlayHand::HandType type = hand.getHandType();
+    if(type == PlayHand::Hand_Unknown)
+    {
+        return;
+    }
+    if(m_gameCtl->getPendPlayer() != m_gameCtl->getUserPlayer())
+    {
+        Cards cards = m_gameCtl->getPendCards();
+        if(!hand.canBeat(PlayHand(cards)))
+        {
+            return;
+        }
+    }
+    // m_countDown->stopCountDown();
+    m_gameCtl->getUserPlayer()->playHand(cs);
+    m_selectCards.clear();
 }
 
 
 void GamePanel::onUserPass(){
-    m_countDown->stopCountDown();
+
+    // m_countDown->stopCountDown();
+    qDebug()<< "GameControl::onUserPass信息:" << "目前玩家 " <<this->m_gameCtl->getCurrentPlayer()->getName()<<"放弃出牌";
     Player* curPlayer = m_gameCtl->getCurrentPlayer();
     Player* userPlayer = m_gameCtl->getUserPlayer();
     if(curPlayer != userPlayer)
@@ -694,22 +731,30 @@ void GamePanel::paintEvent(QPaintEvent *ev)
 
 void GamePanel::mouseMoveEvent(QMouseEvent *ev)
 {
+    // 判断鼠标左键是否按下
     if(ev->buttons() & Qt::LeftButton)
     {
+        // 获取鼠标当前位置
         QPoint pt = ev->pos();
+        // 如果鼠标不在卡片区域内，则取消选中的卡片
         if(!m_cardsRect.contains(pt))
         {
             m_curSelCard = nullptr;
         }
         else
         {
+            // 获取用户的所有卡片面板列表
             QList<CardPanel*> list = m_userCards.keys();
-            for(int i=0; i<list.size(); ++i)
+            // 遍历每个卡片面板
+            for(int i = 0; i < list.size(); ++i)
             {
                 CardPanel* panel = list.at(i);
-                if(m_userCards[panel].contains(pt) &&m_curSelCard != panel)
+                // 判断鼠标是否在该卡片的区域内，且该卡片没有被选中
+                if(m_userCards[panel].contains(pt) && m_curSelCard != panel)
                 {
+                    // 如果鼠标在该卡片区域内，触发点击事件
                     panel->clicked();
+                    // 更新当前选中的卡片
                     m_curSelCard = panel;
                 }
             }
