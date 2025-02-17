@@ -1,3 +1,4 @@
+#include "endingpanel.h"
 #include "gamepanel.h"
 #include "qdebug.h"
 #include "ui_gamepanel.h"
@@ -6,6 +7,7 @@
 #include <QTimer>
 #include <iostream>
 #include <QMouseEvent>
+#include <QPropertyAnimation>
 
 GamePanel::GamePanel(QWidget *parent)
     : QMainWindow(parent)
@@ -442,7 +444,7 @@ void GamePanel::onPlayerStatusChanged(Player *player, GameControl::PlayerStatus 
         updatePlayerCards(m_gameCtl->getRightRobot());
         updatePlayerScore();
         m_gameCtl->setCurrentPlayer(player);
-        // showEndingScorePanel();
+        showEndingScorePanel();
         break;
     default:
         break;
@@ -618,6 +620,8 @@ void GamePanel::onCardSelected(Qt::MouseButton button)
 
 void GamePanel::onUserPlayHand()
 {
+
+
     if(m_gameStatus != GameControl::PlayingHand)
     {
         return;
@@ -659,7 +663,7 @@ void GamePanel::onUserPlayHand()
 void GamePanel::onUserPass(){
 
     // m_countDown->stopCountDown();
-    qDebug()<< "GameControl::onUserPass信息:" << "目前玩家 " <<this->m_gameCtl->getCurrentPlayer()->getName()<<"放弃出牌";
+    // qDebug()<< "GameControl::onUserPass信息:" << "目前玩家 " <<this->m_gameCtl->getCurrentPlayer()->getName()<<"放弃出牌";
     Player* curPlayer = m_gameCtl->getCurrentPlayer();
     Player* userPlayer = m_gameCtl->getUserPlayer();
     if(curPlayer != userPlayer)
@@ -683,25 +687,36 @@ void GamePanel::onUserPass(){
 
 void GamePanel::showAnimation(AnimationType type, int bet)
 {
-    switch (type) {
+    switch(type)
+    {
     case AnimationType::LianDui:
-        break;
     case AnimationType::ShunZi:
+        m_animation->setFixedSize(250, 150);
+        m_animation->move((width()-m_animation->width())/2, 200);
+        m_animation->showSequence((AnimationWindow::Type)type);
         break;
     case AnimationType::Plane:
+        m_animation->setFixedSize(800, 75);
+        m_animation->move((width()-m_animation->width())/2, 200);
+        m_animation->showPlane();
         break;
     case AnimationType::Bomb:
+        m_animation->setFixedSize(180, 200);
+        m_animation->move((width()-m_animation->width())/2, (height() - m_animation->height()) / 2 - 70);
+        m_animation->showBomb();
         break;
     case AnimationType::JokerBomb:
+        m_animation->setFixedSize(250, 200);
+        m_animation->move((width()-m_animation->width())/2, (height() - m_animation->height()) / 2 - 70);
+        m_animation->showJokerBomb();
         break;
     case AnimationType::Bet:
-        m_animation->setFixedSize(160,98);
-        m_animation->move((width()-m_animation->width())/2,(height()-m_animation->height())/2-140);
+        m_animation->setFixedSize(160, 98);
+        m_animation->move((width()-m_animation->width())/2, (height()-m_animation->height())/2-140);
         m_animation->showBetScore(bet);
         break;
-    default:
-        break;
     }
+    m_animation->show();
 }
 
 void GamePanel::hidePlayerDropCards(Player *player)
@@ -723,6 +738,50 @@ void GamePanel::hidePlayerDropCards(Player *player)
         }
         it->lastCards.clear();
     }
+}
+
+
+void GamePanel::showEndingScorePanel()
+{
+    bool islord = m_gameCtl->getUserPlayer()->getRole() == Player::Lord ? true : false;
+    bool isWin = m_gameCtl->getUserPlayer()->isWin();
+    EndingPanel* panel = new EndingPanel(islord, isWin, this);
+    panel->show();
+    panel->move((width() - panel->width()) / 2, -panel->height());
+    panel->setPlayerScore(m_gameCtl->getLeftRobot()->getScore(),
+                          m_gameCtl->getRightRobot()->getScore(),
+                          m_gameCtl->getUserPlayer()->getScore());
+    // if(isWin)
+    // {
+    //     m_bgm->playEndingMusic(true);
+    // }
+    // else
+    // {
+    //     m_bgm->playEndingMusic(false);
+    // }
+
+    QPropertyAnimation *animation = new QPropertyAnimation(panel, "geometry", this);
+    // 动画持续的时间
+    animation->setDuration(1500);   // 1.5s
+    // 设置窗口的起始位置和终止位置
+    animation->setStartValue(QRect(panel->x(), panel->y(), panel->width(), panel->height()));
+    animation->setEndValue(QRect((width() - panel->width()) / 2, (height() - panel->height()) / 2,
+                                 panel->width(), panel->height()));
+    // 设置窗口的运动曲线
+    animation->setEasingCurve(QEasingCurve(QEasingCurve::OutBounce));
+    // 播放动画效果
+    animation->start();
+
+    // 处理窗口信号
+    connect(panel, &EndingPanel::continueGame, this, [=]()
+            {
+                panel->close();
+                panel->deleteLater();
+                animation->deleteLater();
+                ui->btnGroup->selectPanel(ButtonGroup::Empty);
+                gameStatusPrecess(GameControl::DispatchCard);
+                // m_bgm->startBGM(80);
+            });
 }
 
 void GamePanel::paintEvent(QPaintEvent *ev)
@@ -764,14 +823,5 @@ void GamePanel::mouseMoveEvent(QMouseEvent *ev)
         }
     }
 }
-
-
-
-
-
-
-
-
-
 
 

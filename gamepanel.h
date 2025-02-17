@@ -50,7 +50,7 @@ public:
     void showAnimation(AnimationType type, int bet = 0);//显示动画
 
     void hidePlayerDropCards(Player* player);//隐藏打出的牌
-    // void showEndingScorePanel();
+    void showEndingScorePanel();
     // void initCountDown();
 
 protected:

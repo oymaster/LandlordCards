@@ -131,10 +131,9 @@ void Player::clearCards()
 
 void Player::playHand(const Cards &cards)
 {
-    m_cards.printAllCardInfo();
+    // m_cards.printAllCardInfo();
     m_cards.remove(cards);
     qDebug()<< "Player::playHand" << "目前玩家 " <<this->getName()<<"已打出牌，准备发送出牌信号";
-    m_cards.printAllCardInfo();
     emit notifyPlayHand(this, cards);
     qDebug()<< "Player::playHand" << "目前玩家 " <<this->getName()<<"已发送出牌信号";
 }

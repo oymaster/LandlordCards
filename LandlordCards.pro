@@ -15,6 +15,7 @@ SOURCES += \
     cardpanel.cpp \
     cards.cpp \
     countdown.cpp \
+    endingpanel.cpp \
     gamecontrol.cpp \
     main.cpp \
     gamepanel.cpp \
@@ -35,6 +36,7 @@ HEADERS += \
     cardpanel.h \
     cards.h \
     countdown.h \
+    endingpanel.h \
     gamecontrol.h \
     gamepanel.h \
     mybutton.h \
