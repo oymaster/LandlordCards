@@ -45,10 +45,10 @@ signals:
 private:
     QPixmap m_front;
     QPixmap m_back;
-    bool m_isFront;
-    bool m_isSelected;
+    bool m_isFront = true;
+    bool m_isSelected = false;
     Card m_card;
-    Player *m_owner;
+    Player *m_owner = nullptr;
 
 
 };

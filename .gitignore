@@ -28,3 +28,7 @@ Thumbs.db
 *.ilk
 *.log
 *.vs
+
+
+# 忽略 node_modules 文件夹
+node_modules/

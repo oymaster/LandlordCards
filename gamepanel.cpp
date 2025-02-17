@@ -96,7 +96,7 @@ void GamePanel::cropImage(QPixmap &pix, int x, int y, Card &c)
     panel->setCard(c);
     panel->hide();
     m_cardMap.insert(c, panel);
-
+    connect(panel, &CardPanel::cardSelected, this, &GamePanel::onCardSelected);//每张卡牌设定信号槽，当被选中时展示
 }
 
 void GamePanel::initButtonsGroup()
@@ -165,7 +165,7 @@ void GamePanel::initPlayerContext()
 
 void GamePanel::initGameScene()
 {
-    std::cout<<"初始化卡牌界面"<<std::endl;
+    // std::cout<<"初始化卡牌界面"<<std::endl;
     m_baseCard = new CardPanel(this);
     m_baseCard->setImage(m_cardBackImg, m_cardBackImg);
     m_moveCard = new CardPanel(this);
@@ -205,8 +205,10 @@ void GamePanel::gameStatusPrecess(GameControl::GameStatus status)
         for(int i=0; i<last3Card.size(); ++i)
         {
             QPixmap front = m_cardMap[last3Card.at(i)]->getImage();
+            // qDebug()<<m_cardMap[last3Card.at(i)]->isFrontSide();
             m_last3Card[i]->setImage(front, m_cardBackImg);
             m_last3Card[i]->hide();
+            qDebug()<<m_last3Card.at(i)->isFrontSide();
         }
         m_gameCtl->startLordCard();
         break;
@@ -216,6 +218,7 @@ void GamePanel::gameStatusPrecess(GameControl::GameStatus status)
         m_moveCard->hide();
         for(int i=0; i<m_last3Card.size(); ++i)
         {
+
             m_last3Card.at(i)->show();
         }
         for(int i=0; i<m_playerList.size(); ++i)

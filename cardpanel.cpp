@@ -5,7 +5,9 @@
 
 CardPanel::CardPanel(QWidget *parent)
     : QWidget{parent}
-{}
+{
+
+}
 
 void CardPanel::setImage(QPixmap &front, QPixmap &back)
 {

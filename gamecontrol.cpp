@@ -148,8 +148,6 @@ void GameControl::becomeLord(Player *player, int bet)
            emit playerStatusChanged(player, ThinkingForPlayHand);
            m_currPlayer->preparePlayHand();
        });
-
-
 }
 
 void GameControl::clearPlayerScore()
