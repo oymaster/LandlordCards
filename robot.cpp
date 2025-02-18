@@ -80,6 +80,6 @@ void Robot::thinkPlayHand()
     qDebug() <<"Robot name: " << this->getName()<<"正在思考如何出牌";
     Strategy st(this, m_cards);
     Cards cs = st.makeStrategy();
-    cs.printAllCardInfo();
+    // cs.printAllCardInfo();
     playHand(cs);
 }

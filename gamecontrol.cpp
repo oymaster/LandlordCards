@@ -1,4 +1,5 @@
 #include "gamecontrol.h"
+#include "playhand.h"
 #include "qdebug.h"
 
 #include <QRandomGenerator>

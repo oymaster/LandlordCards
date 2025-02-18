@@ -9,7 +9,7 @@ ScorePanel::ScorePanel(QWidget *parent) :
     ui->setupUi(this);
     m_list << ui->meScore << ui->leftScore << ui->rightScore
            << ui->meTitle << ui->leftTitle << ui->rightTitle
-           << ui->meScore << ui->score2 << ui->score3;
+           << ui->score1 << ui->score2 << ui->score3;
 }
 
 ScorePanel::~ScorePanel()
