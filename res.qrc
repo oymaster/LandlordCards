@@ -255,5 +255,6 @@
         <file>music/Woman_wangzha.mp3</file>
         <file>music/Woman_zhadan.mp3</file>
         <file>conf/playList.json</file>
+        <file>images/landlordCards.ico</file>
     </qresource>
 </RCC>

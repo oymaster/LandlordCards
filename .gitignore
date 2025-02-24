@@ -5,7 +5,14 @@
 *.a
 *.moc
 
+# 忽略 server 目录下的构建目录
+/server/cmake-build-debug/
+/server/cmake-build-aliyun-debug/
+/server/bin/
 
+# 忽略 IDE 配置文件
+/server/.idea/
+/.idea/
 
 build/
 
