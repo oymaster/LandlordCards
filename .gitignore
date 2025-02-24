@@ -1,9 +1,3 @@
-# Qt 自动生成的文件
-*.pro.user
-*.qmake.stash
-*.o
-*.a
-*.moc
 
 # 忽略 server 目录下的构建目录
 /server/cmake-build-debug/
@@ -14,28 +8,7 @@
 /server/.idea/
 /.idea/
 
-build/
-
-
-# 操作系统生成的文件
-.DS_Store
-Thumbs.db
-
-# IDE 临时文件
-*.user
-
-# 编译生成的文件
-*.lo
-*.la
-*.slo
-*.pdb
-*.idb
-*.ipch
-*.dSYM
-*.ilk
-*.log
-*.vs
-
-
-# 忽略 node_modules 文件夹
-node_modules/
+# 忽略 client 
+/client/build/
+/client/CMakeLists.txt.user
+/client/*.qrc

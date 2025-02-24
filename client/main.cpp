@@ -1,4 +1,4 @@
-#include "gamepanel.h"
+#include "cards.h"
 #include "loading.h"
 
 #include <QApplication>
