@@ -10,7 +10,7 @@ include_directories(
         ${PROJECT_SOURCE_DIR}/reactor
         ${PROJECT_SOURCE_DIR}/tcp
         ${PROJECT_SOURCE_DIR}/thread
-
+        ${PROJECT_SOURCE_DIR}/test
 )
 
 add_subdirectory(common)
@@ -18,9 +18,12 @@ add_subdirectory(http)
 add_subdirectory(reactor)
 add_subdirectory(tcp)
 add_subdirectory(thread)
+#测试用子目录
+add_subdirectory(test)
+
 
 #链接子目录静态库文件
-link_libraries(tcp thread http  reactor common)
+link_libraries(tcp thread http reactor common test)
 
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 

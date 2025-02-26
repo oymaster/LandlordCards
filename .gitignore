@@ -3,6 +3,9 @@
 /server/cmake-build-debug/
 /server/cmake-build-aliyun-debug/
 /server/bin/
+/server/build/
+/server/*.user
+/server/.*
 
 # 忽略 IDE 配置文件
 /server/.idea/
