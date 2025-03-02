@@ -3,6 +3,7 @@
 #include "robotgrablord.h"
 #include "robotplayhand.h"
 #include <QDebug>
+#include <QThreadPool>
 
 Robot::Robot(QObject *parent) : Player(parent)
 {
@@ -11,23 +12,25 @@ Robot::Robot(QObject *parent) : Player(parent)
 
 void Robot::prepareCallLord()
 {
-    RobotGrabLord* subThread = new RobotGrabLord(this);
-    connect(subThread, &RobotGrabLord::finished, this, [=](){
-        qDebug() << "RobotGrabLord 子线程对象析构..." << ", Robot name: " << this->getName();
-        subThread->deleteLater();
-    });
-    subThread->start();
+    RobotGrabLord* task = new RobotGrabLord(this);
+    QThreadPool::globalInstance()->start(task);
+    // connect(subThread, &RobotGrabLord::finished, this, [=](){
+    //     qDebug() << "RobotGrabLord 子线程对象析构..." << ", Robot name: " << this->getName();
+    //     subThread->deleteLater();
+    // });
+    // subThread->start();
 }
 
 void Robot::preparePlayHand()
 {
-    RobotPlayHand* subThread = new RobotPlayHand(this);
-    connect(subThread, &RobotGrabLord::finished, this, [=](){
-        qDebug() << "RobotPlayHand 子线程对象析构..." << ", Robot name: " << this->getName();
-        subThread->deleteLater();
-    });
+    RobotPlayHand* task = new RobotPlayHand(this);
+    QThreadPool::globalInstance()->start(task);
+    // connect(subThread, &RobotGrabLord::finished, this, [=](){
+    //     qDebug() << "RobotPlayHand 子线程对象析构..." << ", Robot name: " << this->getName();
+    //     subThread->deleteLater();
+    // });
 
-    subThread->start();
+    // subThread->start();
 }
 
 void Robot::thinkCallLord()

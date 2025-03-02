@@ -34,7 +34,13 @@ include_directories(
     ${PROJECT_SOURCE_DIR}/strategy
     ${PROJECT_SOURCE_DIR}/thread
     ${PROJECT_SOURCE_DIR}/windows
+    ${PROJECT_SOURCE_DIR}/tcp
+    ${PROJECT_SOURCE_DIR}/serialize
+    ${PROJECT_SOURCE_DIR}/crypto
+    "D:\\code\\OpenSSL-Win64\\include"
+    "D:\\code\\protobuf\\include"
 )
+link_directories("D:\\code\\protobuf\\lib")
 
 
 # 添加子目录，通常是为了将其他模块（如 card、windows、player 等）包含进来
@@ -45,6 +51,10 @@ add_subdirectory(player)
 add_subdirectory(thread)
 add_subdirectory(strategy)
 add_subdirectory(control)
+add_subdirectory(tcp)
+add_subdirectory(serialize)
+add_subdirectory(crypto)
+
 
 # 添加资源文件
 qt5_add_resources(RES res.qrc)
@@ -77,7 +87,7 @@ else()
 endif()
 
 # 链接 Qt 的 Widgets 库以及其他添加的子模块（如 card、windows 等）
-target_link_libraries(client PRIVATE Qt${QT_VERSION_MAJOR}::Widgets card windows control player strategy thread)
+target_link_libraries(client PRIVATE Qt${QT_VERSION_MAJOR}::Widgets card windows control player strategy thread crypto serialize tcp)
 
 # 以下是 macOS/iOS 配置部分，用于设置应用程序的标识符等
 if(${QT_VERSION} VERSION_LESS 6.1.0)

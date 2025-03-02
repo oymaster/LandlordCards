@@ -1,10 +1,11 @@
 #ifndef ROBOTGrabLORD_H
 #define ROBOTGrabLORD_H
 
+#include <QRunnable>
 #include <QThread>
 #include "player.h"
 
-class RobotGrabLord : public QThread
+class RobotGrabLord : public QObject,public QRunnable
 {
     Q_OBJECT
 public:
