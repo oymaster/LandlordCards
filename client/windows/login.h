@@ -3,6 +3,7 @@
 
 #include <QDialog>
 #include <QLineEdit>
+#include "codec.h"
 
 namespace Ui {
 class Login;
@@ -17,7 +18,7 @@ public:
     //校验数据函数
     bool verifyData(QLineEdit* edit);
     //连接服务器
-    // void startConnect(Message* msg);
+    void startConnect(Message* msg);
     //槽函数
     void onLogin();
     void onRegister();
@@ -30,6 +31,8 @@ public:
 
 private:
     Ui::Login *ui;
+    bool m_isConnected=false;
+    const QByteArray KEY = "天长地久有时尽,此恨绵绵无绝期!";
 };
 
 #endif // LOGIN_H

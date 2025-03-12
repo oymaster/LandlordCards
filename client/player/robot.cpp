@@ -1,7 +1,9 @@
 #include "robot.h"
+#include "datamanager.h"
 #include "strategy.h"
-#include "robotgrablord.h"
+#include "robotgraplord.h"
 #include "robotplayhand.h"
+#include "taskqueue.h"
 #include <QDebug>
 #include <QThreadPool>
 
@@ -35,6 +37,12 @@ void Robot::preparePlayHand()
 
 void Robot::thinkCallLord()
 {
+    if(DataManager::getInstance()->isNetworkMode())
+    {
+        Task t = TaskQueue::getInstance()->take();
+        grabLordBet(t.bet);
+        return;
+    }
     int weight = 0;
     Strategy st(this, m_cards);
     weight += st.getRangeCards(Card::Card_SJ, Card::Card_BJ).cardCount() * 6;

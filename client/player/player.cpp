@@ -1,5 +1,4 @@
 #include "player.h"
-#include "qdebug.h"
 
 Player::Player(QObject *parent) : QObject(parent)
 {
@@ -131,11 +130,8 @@ void Player::clearCards()
 
 void Player::playHand(const Cards &cards)
 {
-    // m_cards.printAllCardInfo();
     m_cards.remove(cards);
-    qDebug()<< "Player::playHand" << "目前玩家 " <<this->getName()<<"已打出牌，准备发送出牌信号";
     emit notifyPlayHand(this, cards);
-    qDebug()<< "Player::playHand" << "目前玩家 " <<this->getName()<<"已发送出牌信号";
 }
 
 Player *Player::getPendPlayer()
@@ -154,16 +150,21 @@ void Player::storePendingInfo(Player *player, const Cards &cards)
     m_pendCards = cards;
 }
 
-void Player::prepareCallLord()
+void Player::clearPendingInfo()
 {
-
+    m_pendPlayer = nullptr;
+    m_pendCards.clear();
 }
+
+//void Player::prepareCallLord()
+//{
+
+//}
 
 void Player::preparePlayHand()
 {
 
 }
-
 
 void Player::thinkCallLord()
 {
@@ -174,6 +175,3 @@ void Player::thinkPlayHand()
 {
 
 }
-
-
-

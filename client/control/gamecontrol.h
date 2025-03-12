@@ -4,8 +4,7 @@
 #include <QObject>
 #include "robot.h"
 #include "userplayer.h"
-#include "card.h"
-
+#include "cards.h"
 
 struct BetRecord
 {
@@ -21,24 +20,34 @@ struct BetRecord
     }
     Player* player;
     int bet;
-    int times;
+    int times;  // 第几次叫地主
 };
 
 class GameControl : public QObject
 {
     Q_OBJECT
 public:
-    enum GameStatus{
-        DispatchCard,CallingLord,PlayingHand
+    // 游戏状态
+    enum GameStatus
+    {
+        DispatchCard,
+        CallingLord,
+        PlayingHand
     };
-    enum PlayerStatus{
-        ThinkingForCallLord,ThinkingForPlayHand,Winning
+    // 玩家状态
+    enum PlayerStatus
+    {
+        ThinkingForCallLord,
+        ThinkingForPlayHand,
+        Winning
     };
 
     explicit GameControl(QObject *parent = nullptr);
 
+    // 初始化玩家
     void playerInit();
 
+    // 得到玩家的实例对象
     Robot* getLeftRobot();
     Robot* getRightRobot();
     UserPlayer* getUserPlayer();
@@ -46,34 +55,49 @@ public:
     void setCurrentPlayer(Player* player);
     Player* getCurrentPlayer();
 
+    // 得到出牌玩家和打出的牌
     Player* getPendPlayer();
     Cards getPendCards();
 
-    void initAllCards();//初始化卡牌
-    Card takeOneCard();//发牌
-    Cards getSurplusCards();//地主牌
-    void resetCardData();//每回合重置卡牌数据
-    void startLordCard();//准备叫地主
-    void becomeLord(Player *player, int bet);//当地主
-    void clearPlayerScore(); //清空得分
-    int getPlayerMaxBet();//获取最大下注分
-    void onGrabBet(Player* player, int bet);//处理叫地主
-    void onPlayHand(Player *player, const Cards &card);//处理出牌
+    // 初始化扑克牌
+    void initAllCards();
+    // 每次发一张牌
+    Card takeOneCard();
+    // 得到最后的三张底牌
+    Cards getSurplusCards();
+    // 重置卡牌数据
+    void resetCardData();
 
+    // 准备叫地主
+    void startLordCard();
+    // 成为地主
+    void becomeLord(Player *player, int bet);
+    // 清空所有玩家的得分
+    void clearPlayerScore();
+    // 得到玩家下注的最高分数
+    int getPlayerMaxBet();
+
+    // 处理叫地主
+    void onGrabBet(Player* player, int bet);
+
+    // 处理出牌
+    void onPlayHand(Player *player, const Cards &card);
+
+    // 设置当前玩家
+    void setCurrentPlayer(int index);
 
 signals:
     void playerStatusChanged(Player* player, PlayerStatus status);
+    // 通知玩家抢地主了
     void notifyGrabLordBet(Player* player, int bet, bool flag);
+    // 游戏状态变化
     void gameStatusChanged(GameStatus status);
+    // 通知玩家出牌了
     void notifyPlayHand(Player* player, const Cards& card);
+    // 给玩家传递出牌数据
     void pendingInfo(Player* player, const Cards& card);
 
 private:
-    // Robot *m_robotLeft;
-    // Robot *m_robotRight;
-    // UserPlayer *m_user;
-    // Player *m_currPlayer;
-    // Player *m_pendPlayer;
     Robot* m_robotLeft = nullptr;
     Robot* m_robotRight = nullptr;
     UserPlayer* m_user = nullptr;
@@ -83,6 +107,7 @@ private:
     Cards m_allCards;
     BetRecord m_betRecord;
     int m_curBet = 0;
+
 };
 
 #endif // GAMECONTROL_H

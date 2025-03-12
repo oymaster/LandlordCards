@@ -1,7 +1,12 @@
 #include "cards.h"
+#include "datamanager.h"
 #include <QRandomGenerator>
 #include <QDebug>
-Cards::Cards() {}
+
+Cards::Cards()
+{
+
+}
 
 Cards::Cards(const Card &card)
 {
@@ -10,16 +15,19 @@ Cards::Cards(const Card &card)
 
 void Cards::add(const Card &card)
 {
-    m_cards.insert(card);
+    m_cards.append(card);
 }
 
-void Cards::add(const Cards &cards){
-    m_cards.unite(cards.m_cards);
+void Cards::add(const Cards &cards)
+{
+    m_cards.append(cards.m_cards);
 }
 
-void Cards::add(const QVector<Cards>& cards){
-    for(auto i : cards){
-        add(i);
+void Cards::add(const QVector<Cards> &cards)
+{
+    for(int i=0; i<cards.count(); ++i)
+    {
+        add(cards.at(i));
     }
 }
 
@@ -37,18 +45,30 @@ Cards &Cards::operator <<(const Cards &cards)
 
 void Cards::remove(const Card &card)
 {
-    m_cards.remove(card);
+    m_cards.removeOne(card);
 }
 
 void Cards::remove(const Cards &cards)
 {
-    m_cards.subtract(cards.m_cards);
+    // m_cards.subtract(cards.m_cards);
+    for(auto& item :cards.m_cards)
+    {
+        for(auto& it : m_cards)
+        {
+            if(item == it)
+            {
+                remove(item);
+                break;
+            }
+        }
+    }
 }
 
 void Cards::remove(const QVector<Cards> &cards)
 {
-    for(auto i : cards){
-        remove(i);
+    for(int i=0; i<cards.size(); ++i)
+    {
+        remove(cards.at(i));
     }
 }
 
@@ -74,24 +94,34 @@ void Cards::clear()
 
 Card::CardPoint Cards::maxPoint()
 {
-    Card::CardPoint mx = Card::Card_Begin;
-    if(!m_cards.isEmpty()){
-        for(auto it = m_cards.begin(); it!=m_cards.end();++it){
-            mx = std::max(mx,it->getPoint());
+    Card::CardPoint max = Card::Card_Begin;
+    if(!m_cards.isEmpty())
+    {
+        for(auto it = m_cards.begin(); it!=m_cards.end(); ++it)
+        {
+            if(it->getPoint() > max)
+            {
+                max = it->getPoint();
+            }
         }
     }
-    return mx;
+    return max;
 }
 
 Card::CardPoint Cards::minPoint()
 {
-    Card::CardPoint mn = Card::Card_End;
-    if(!m_cards.isEmpty()){
-        for(auto it = m_cards.begin(); it!=m_cards.end();++it){
-            mn = std::min(mn,it->getPoint());
+    Card::CardPoint min = Card::Card_End;
+    if(!m_cards.isEmpty())
+    {
+        for(auto it = m_cards.begin(); it!=m_cards.end(); ++it)
+        {
+            if(it->getPoint() < min)
+            {
+                min = it->getPoint();
+            }
         }
     }
-    return mn;
+    return min;
 }
 
 int Cards::pointCount(Card::CardPoint point)
@@ -114,23 +144,44 @@ bool Cards::contains(const Card &card)
 
 bool Cards::contains(const Cards &cards)
 {
-    return m_cards.contains(cards.m_cards);
+    //return m_cards.contains(cards.m_cards);
+    bool flag = true;
+    for(auto& item : cards.m_cards)
+    {
+        if(!m_cards.contains(item))
+        {
+            flag = false;
+            break;
+        }
+    }
+    return flag;
 }
 
 Card Cards::takeRandomCard()
 {
-    int num = QRandomGenerator::global()->bounded(m_cards.size());
-    QSet<Card>::const_iterator it = m_cards.constBegin();
-    for(int i=0; i<num; ++i, ++it);
-    Card card = *it;
-    m_cards.erase(it);
+    Card card;
+    if(!DataManager::getInstance()->isNetworkMode())
+    {
+        // 生成一个随机数
+        int num = QRandomGenerator::global()->bounded(m_cards.size());
+        auto it = m_cards.begin();
+        for(int i=0; i<num; ++i, ++it);
+        card = *it;
+        m_cards.erase(it);
+
+    }
+    else
+    {
+        card = m_cards.takeFirst();
+    }
     return card;
 }
 
 CardList Cards::toCardList(SortType type)
 {
     CardList list;
-    for(auto it = m_cards.begin();it!=m_cards.end();++it){
+    for(auto it = m_cards.begin(); it != m_cards.end(); ++it)
+    {
         list << *it;
     }
     if(type == Asc)
@@ -190,4 +241,3 @@ void Cards::printAllCardInfo()
     }
     qDebug() << text;
 }
-

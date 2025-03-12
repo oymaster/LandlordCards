@@ -1,9 +1,9 @@
+#include "datamanager.h"
 #include "gamecontrol.h"
 #include "playhand.h"
-#include "qdebug.h"
-
 #include <QRandomGenerator>
 #include <QTimer>
+#include <QDebug>
 
 GameControl::GameControl(QObject *parent)
     : QObject{parent}
@@ -38,7 +38,8 @@ void GameControl::playerInit()
     m_robotRight->setPrevPlayer(m_user);
     m_robotRight->setNextPlayer(m_robotLeft);
 
-    m_currPlayer = m_user;
+    // 指定当前玩家
+    // m_currPlayer = m_user;
 
 
     connect(m_user, &UserPlayer::notifyGrabLordBet, this, &GameControl::onGrabBet);//玩家发送下注信号，激活系统处理下注函数
@@ -94,6 +95,13 @@ Cards GameControl::getPendCards()
 
 void GameControl::initAllCards()
 {
+    // 判断是不是网络模式
+    if(DataManager::getInstance()->isNetworkMode())
+    {
+        m_allCards = DataManager::getInstance()->getCards();
+        m_allCards.add(DataManager::getInstance()->getLast3Cards());
+        return;
+    }
     m_allCards.clear();
     for(int p = Card::Card_Begin+1; p<Card::Card_SJ; ++p)
     {
@@ -119,12 +127,19 @@ Cards GameControl::getSurplusCards()
 
 void GameControl::resetCardData()
 {
+    // 洗牌
     initAllCards();
+    // 清空所有玩家的牌
     m_robotLeft->clearCards();
     m_robotRight->clearCards();
     m_user->clearCards();
+    // 初始化出牌玩家和牌
     m_pendPlayer = nullptr;
     m_pendCards.clear();
+    // 解决机器人地主不出牌的bug
+    m_robotLeft->clearPendingInfo();
+    m_robotRight->clearPendingInfo();
+    m_user->clearPendingInfo();
 }
 
 void GameControl::startLordCard()
@@ -165,33 +180,43 @@ int GameControl::getPlayerMaxBet()
 
 void GameControl::onGrabBet(Player *player, int bet)
 {
-    //不叫或者叫的比前面的低，直接不抢
+    // 1. 通知主界面玩家叫地主了(更新信息提示)
     if(bet == 0 || m_betRecord.bet >= bet)
     {
         emit notifyGrabLordBet(player, 0, false);
     }
-    //如果前面没人抢，自己当地主
     else if(bet > 0 && m_betRecord.bet == 0)
     {
+        // 第一个抢地主的玩家
         emit notifyGrabLordBet(player, bet, true);
     }
     else
     {
+        // 第2,3个抢地主的玩家
         emit notifyGrabLordBet(player, bet, false);
     }
 
+    qDebug() << "curent player name: " << player->getName() << ", 下注分数: "
+             << bet<< ", m_betRecord.times: " << m_betRecord.times;
+
+
+    // 2. 判断玩家下注是不是3分, 如果是抢地主结束
     if(bet == 3)
     {
+        // 玩家成为地主
         becomeLord(player, bet);
+        // 清空数据
         m_betRecord.reset();
         return;
     }
+    // 3. 下注不够3分, 对玩家的分数进行比较, 分数高的是地主
     if(m_betRecord.bet < bet)
     {
         m_betRecord.bet = bet;
         m_betRecord.player = player;
     }
     m_betRecord.times ++;
+    // 如果每个玩家都抢过一次地主, 抢地主结束
     if(m_betRecord.times == 3)
     {
         if(m_betRecord.bet == 0)
@@ -200,13 +225,14 @@ void GameControl::onGrabBet(Player *player, int bet)
         }
         else
         {
-            //叫完地主
             becomeLord(m_betRecord.player, m_betRecord.bet);
         }
         m_betRecord.reset();
         return;
     }
-    m_currPlayer = player->getNextPlayer();//换下一个人开始叫地主
+    // 4. 切换玩家, 通知下一个玩家继续抢地主
+    m_currPlayer = player->getNextPlayer();
+    // 发送信号给主界面, 告知当前状态为抢地主
     emit playerStatusChanged(m_currPlayer, ThinkingForCallLord);
     m_currPlayer->prepareCallLord();
 }
@@ -270,4 +296,20 @@ void GameControl::onPlayHand(Player *player, const Cards &card)
     m_currPlayer = player->getNextPlayer();
     m_currPlayer->preparePlayHand();
     emit playerStatusChanged(m_currPlayer, GameControl::ThinkingForPlayHand);
+}
+
+void GameControl::setCurrentPlayer(int index)
+{
+    if(index == 1)
+    {
+        m_currPlayer = m_user;
+    }
+    else if(index == 2)
+    {
+        m_currPlayer = m_robotLeft;
+    }
+    else if(index == 3)
+    {
+        m_currPlayer = m_robotRight;
+    }
 }

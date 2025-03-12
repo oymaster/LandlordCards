@@ -9,7 +9,7 @@ file(GLOB HEADERS ${PROJECT_SOURCE_DIR}/*.h)
 file(GLOB UIS ${CMAKE_CURRENT_SOURCE_DIR}/*.ui)
 aux_source_directory(./ SRC)
 
-message("dir1 = ${HEADERS}")
+# message("dir1 = ${HEADERS}")
 
 # 将当前目录下所有源文件列入变量 SRC
 # 'aux_source_directory' 是一个用于自动查找指定目录下所有源文件的命令

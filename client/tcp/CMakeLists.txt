@@ -15,4 +15,4 @@ add_library(tcp ${SRC} ${HEAD})
 
 
 # 链接系统Core动态库
-target_link_libraries(tcp PRIVATE Qt${QT_VERSION_MAJOR}::Core)
+target_link_libraries(tcp PRIVATE Qt${QT_VERSION_MAJOR}::Core Ws2_32)
