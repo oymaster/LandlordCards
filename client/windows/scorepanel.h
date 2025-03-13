@@ -23,6 +23,8 @@ public:
     void setMyFontSize(int point);
     // 设置字体的颜色
     void setMyFontColor(FontColor color);
+    // 设置玩家的名字
+    void setPlayerName(QByteArray left, QByteArray mid, QByteArray right);
 
 private:
     Ui::ScorePanel *ui;

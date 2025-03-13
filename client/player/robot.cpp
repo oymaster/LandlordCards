@@ -1,7 +1,7 @@
 #include "robot.h"
 #include "datamanager.h"
 #include "strategy.h"
-#include "robotgraplord.h"
+#include "robotgrablord.h"
 #include "robotplayhand.h"
 #include "taskqueue.h"
 #include <QDebug>
@@ -43,6 +43,14 @@ void Robot::thinkCallLord()
         grabLordBet(t.bet);
         return;
     }
+    /*
+     * 基于手中的牌计算权重
+     * 大小王: 6
+     * 顺子/炸弹: 5
+     * 三张点数相同的牌: 4
+     * 2的权重: 3
+     * 对儿牌: 1
+    */
     int weight = 0;
     Strategy st(this, m_cards);
     weight += st.getRangeCards(Card::Card_SJ, Card::Card_BJ).cardCount() * 6;
@@ -89,6 +97,12 @@ void Robot::thinkCallLord()
 void Robot::thinkPlayHand()
 {
     qDebug() <<"Robot name: " << this->getName()<<"正在思考如何出牌";
+    if(DataManager::getInstance()->isNetworkMode())
+    {
+        Task t = TaskQueue::getInstance()->take();
+        playHand(t.cs);
+        return;
+    }
     Strategy st(this, m_cards);
     Cards cs = st.makeStrategy();
     // cs.printAllCardInfo();

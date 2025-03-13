@@ -15,6 +15,8 @@ public:
 
     void setPlayerScore(int left, int right, int me);
 
+    void setPlayerName(QByteArrayList names);
+
 signals:
     void continueGame();
 

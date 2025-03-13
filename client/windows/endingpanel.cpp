@@ -52,6 +52,11 @@ void EndingPanel::setPlayerScore(int left, int right, int me)
     m_score->setScores(left, right, me);
 }
 
+void EndingPanel::setPlayerName(QByteArrayList names)
+{
+    m_score->setPlayerName(names.at(0), names.at(1), names.at(2));
+}
+
 void EndingPanel::paintEvent(QPaintEvent *ev)
 {
     Q_UNUSED(ev)

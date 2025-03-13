@@ -1,4 +1,5 @@
 #include "endingpanel.h"
+#include "datamanager.h"
 #include "gamepanel.h"
 #include "playhand.h"
 #include "qdebug.h"
@@ -33,6 +34,14 @@ GamePanel::GamePanel(QWidget *parent)
     connect(m_timer, &QTimer::timeout, this, &GamePanel::onDispatchCard);//10ms更新一次卡牌位置
     m_animation = new AnimationWindow(this);
     m_bgm = new BGMControl(this);
+
+    Communication* comm = DataManager::getInstance()->getCommunication();
+    //如果收到通信类的开始游戏，启动游戏
+    connect(comm, &Communication::startGame, this, [=](QByteArray msg){
+        initGamePanel(msg);
+        gameStatusPrecess(GameControl::DispatchCard);
+        m_bgm->startBGM(80);
+    });
 }
 
 GamePanel::~GamePanel()

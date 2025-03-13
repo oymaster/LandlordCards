@@ -2,9 +2,9 @@
 #define AESCRYPTO_H
 
 #include <QObject>
+#include <QByteArray>
 #include <QMap>
 #include <openssl/evp.h>
-
 
 class AesCrypto : public QObject
 {
@@ -69,4 +69,4 @@ private:
     QByteArray m_key;
 };
 
-#endif // AESCRYPTO_H
+#endif

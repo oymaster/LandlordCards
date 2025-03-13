@@ -8,12 +8,13 @@ class Player : public QObject
 {
     Q_OBJECT
 public:
+
+    enum Role{Lord, Farmer};    // 角色
+    enum Sex{Man, Woman};       // 性别
+    enum Direction{Left, Right};    // 头像的显示方位
+    enum Type{Robot, User, UnKnow}; // 玩家的类型
     explicit Player(QString name,QObject *parent = nullptr);
     explicit Player(QObject *parent = nullptr);
-    enum Role{Lord,Farmer};
-    enum Sex{Man,Woman};
-    enum Direction{Left,Right};
-    enum Type{Robot,User,Unkonw};
 
     void setName(QString name);
     QString getName();
@@ -53,18 +54,24 @@ public:
     Player* getPendPlayer();
     Cards getPendCards();
 
+    // 存储出牌玩家对象和打出的牌
     void storePendingInfo(Player* player, const Cards& cards);
+    // 清除信息
+    void clearPendingInfo();
 
-    virtual void prepareCallLord();
+    virtual void prepareCallLord()=0;// 纯虚函数
     virtual void preparePlayHand();
     virtual void thinkCallLord();
     virtual void thinkPlayHand();
 
 
 signals:
-    void notifyGrabLordBet(Player *player, int bet);
+    // 通知已经叫地主下注
+    void notifyGrabLordBet(Player* player, int bet);
+    // 通知已经出牌
     void notifyPlayHand(Player* player, const Cards& card);
-    void notifyPickCards(Player* player, const Cards& cards);//拿到地主牌
+    // 通知已经发牌了
+    void notifyPickCards(Player* player, const Cards& cards);
 
 protected:
     int m_score = 0;

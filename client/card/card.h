@@ -1,6 +1,7 @@
 #ifndef CARD_H
 #define CARD_H
 
+#include <QDataStream>
 #include <QVector>
 
 class Card
@@ -40,6 +41,11 @@ public:
     void setSuit(CardSuit suit);
     CardPoint getPoint() const;
     CardSuit getSuit() const;
+
+    // 添加友元函数
+    friend QDataStream& operator<<(QDataStream& in, const Card& card);
+    friend QDataStream& operator>>(QDataStream& out, Card& card);
+
 
 private:
     CardPoint m_point;

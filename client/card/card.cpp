@@ -61,3 +61,20 @@ uint qHash(const Card &card)
     return card.getPoint()*100+card.getSuit();
 }
 
+QDataStream& operator<<(QDataStream& in, const Card& card)
+{
+    int suit = static_cast<int>(card.getSuit());
+    int point = static_cast<int>(card.getPoint());
+    in << suit << point;
+    return in;
+}
+
+QDataStream& operator>>(QDataStream& out, Card& card)
+{
+    int suit, point;
+    out >> suit >> point;
+    card.setSuit(static_cast<Card::CardSuit>(suit));
+    card.setPoint(static_cast<Card::CardPoint>(point));
+    return out;
+}
+

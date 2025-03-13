@@ -47,11 +47,11 @@ void Communication::parseRecvMessage()
     qDebug() << "ResCode: " << (int)ptr->rescode << ", " << ptr->data1 << ", " << ptr->data2;
     switch(ptr->rescode)
     {
-    case RespondCode::LoginOk:
+    case RespondCode::LoginOK:
         emit loginOk();
         qDebug() << "登录成功了...";
         break;
-    case RespondCode::RegisterOk:
+    case RespondCode::RegisterOK:
         emit registerOk();
         qDebug() << "注册成功了...";
         break;

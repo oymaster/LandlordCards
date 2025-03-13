@@ -10,6 +10,7 @@
 #include <QThreadPool>
 #include <QMessageBox>
 
+
 Login::Login(QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::Login)
@@ -86,7 +87,7 @@ Login::Login(QWidget *parent)
     ui->userName->setText("hello");
     ui->passwd->setText("Ab1*");
 
-    // loadUserInfo();
+    loadUserInfo();
 }
 
 
@@ -113,34 +114,32 @@ void Login::startConnect(Message *msg)
     {
         Communication *task = new Communication(*msg);
         connect(task, &Communication::connectFailed, this, [=](){
-            //错误提示对话框
             QMessageBox::critical(this, "连接服务器", "连接服务器失败");
             m_isConnected = false;
         });
-        // connect(task, &Communication::loginOk, this, [=](){
-        //     // 将用户名保存到单例对象
-        //     DataManager::getInstance()->setUserName(ui->userName->text().toUtf8());
-        //     // 保存用户名和密码
-        //     saveUserInfo();
-        //     // 显示游戏模式窗口-> 单机版, 网络版
-        //     GameMode* mode = new GameMode;
-        //     mode->show();
-        //     accept();
-        // });
-        // connect(task, &Communication::registerOk, this, [=](){
-        //     ui->stackedWidget->setCurrentIndex(0);
-        // });
-        // connect(task, &Communication::failedMsg, this, [=](QByteArray msg){
-        //     QMessageBox::critical(this, "ERROR", msg);
-        // });
+        connect(task, &Communication::loginOk, this, [=](){
+            // 将用户名保存到单例对象
+            DataManager::getInstance()->setUserName(ui->userName->text().toUtf8());
+            // 保存用户名和密码
+            saveUserInfo();
+            // 显示游戏模式窗口-> 单机版, 网络版
+            GameMode* mode = new GameMode;
+            mode->show();
+            accept();
+        });
+        connect(task, &Communication::registerOk, this, [=](){
+            ui->stackedWidget->setCurrentIndex(0);
+        });
+        connect(task, &Communication::failedMsg, this, [=](QByteArray msg){
+            QMessageBox::critical(this, "ERROR", msg);
+        });
         m_isConnected = true;
         QThreadPool::globalInstance()->start(task);
-        // DataManager::getInstance()->setCommuncation(task);
+        DataManager::getInstance()->setCommunication(task);
     }
     else
     {
-        //和服务器进行通信(用于通信的套接字在当前Login拿不到 它在Communication类里)
-        //如果我们想要全局都可以访问最简单的方法就是存储到单例类里
+        // 和服务器进行通信
         DataManager::getInstance()->getCommunication()->sendMessage(msg);
     }
 }
