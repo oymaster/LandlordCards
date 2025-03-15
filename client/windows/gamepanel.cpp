@@ -815,6 +815,7 @@ void GamePanel::showEndingScorePanel()
     panel->setPlayerScore(m_gameCtl->getLeftRobot()->getScore(),
                           m_gameCtl->getRightRobot()->getScore(),
                           m_gameCtl->getUserPlayer()->getScore());
+    panel->setPlayerName(m_nameList);
     if(isWin)
     {
         m_bgm->playEndingMusic(true);
