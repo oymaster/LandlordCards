@@ -2,6 +2,7 @@
 #include "login.h"
 #include "aescrypto.h"
 #include <QApplication>
+#include <QFile>
 #include <qdebug.h>
 #include "rsacrypto.h"
 
@@ -76,10 +77,24 @@ int main(int argc, char *argv[])
     // 允许使用小数缩放因子，避免舍入误差
     QApplication::setHighDpiScaleFactorRoundingPolicy(Qt::HighDpiScaleFactorRoundingPolicy::PassThrough);
     QApplication a(argc, argv);
+
     a.setFont(QFont("微软雅黑"));
+
     qRegisterMetaType<Cards>("Cards&");//自定义类型注册为 Qt 元对象类型
     qRegisterMetaType<Cards>("Cards");
+
+
+    QFile file(":/conf/style.qss");
+    file.open(QFile::ReadOnly);
+    QByteArray all = file.readAll();
+    a.setStyleSheet(all);
+    file.close();
+
     Login w;
-    w.show();
-    return a.exec();
+    int ret = w.exec();
+    if(ret == QDialog::Accepted)
+    {
+        // test();
+        return a.exec();
+    }
 }

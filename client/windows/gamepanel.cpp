@@ -32,6 +32,7 @@ GamePanel::GamePanel(QWidget *parent)
     initCountDown();//倒计时
     m_timer = new QTimer(this);
     connect(m_timer, &QTimer::timeout, this, &GamePanel::onDispatchCard);//10ms更新一次卡牌位置
+
     m_animation = new AnimationWindow(this);
     m_bgm = new BGMControl(this);
 
@@ -66,6 +67,10 @@ void GamePanel::gameControlInit()
     connect(leftRobot, &Player::notifyPickCards, this, &GamePanel::disposeCard);
     connect(rightRobot, &Player::notifyPickCards, this, &GamePanel::disposeCard);
     connect(user, &Player::notifyPickCards, this, &GamePanel::disposeCard);
+
+    m_nameList << leftRobot->getName().toUtf8()
+               << user->getName().toUtf8()
+               << rightRobot->getName().toUtf8();
 }
 
 void GamePanel::updatePlayerScore()
@@ -114,21 +119,27 @@ void GamePanel::cropImage(QPixmap &pix, int x, int y, Card &c)
 
 void GamePanel::initButtonsGroup()
 {
+    //处理按钮组的初始化和信号
     ui->btnGroup->initButtons();
     ui->btnGroup->selectPanel(ButtonGroup::Start);
-
-    connect(ui->btnGroup, &ButtonGroup::startGame, this, [=](){
-        ui->btnGroup->selectPanel(ButtonGroup::Empty);
-        m_gameCtl->clearPlayerScore();
-        updatePlayerScore();
-        gameStatusPrecess(GameControl::DispatchCard);
-        m_bgm->startBGM(80);
-    });
+    //startGame重载了，这里利用函数指针指定无参的
+    void (GamePanel::*startGame)() = &GamePanel::startGame;
+    connect(ui->btnGroup, &ButtonGroup::startGame, this, startGame);
     connect(ui->btnGroup, &ButtonGroup::playHand, this, &GamePanel::onUserPlayHand);
     connect(ui->btnGroup, &ButtonGroup::pass, this, &GamePanel::onUserPass);
     connect(ui->btnGroup, &ButtonGroup::betPoint, this, [=](int bet){
         m_gameCtl->getUserPlayer()->grabLordBet(bet);
         ui->btnGroup->selectPanel(ButtonGroup::Empty);
+        // 判断是否是网络模式
+        if(DataManager::getInstance()->isNetworkMode())
+        {
+            Message msg;
+            msg.userName = DataManager::getInstance()->getUserName();
+            msg.roomName = DataManager::getInstance()->getRoomName();
+            msg.data1 = QByteArray::number(bet);
+            msg.reqcode = RequestCode::GrabLord;
+            DataManager::getInstance()->getCommunication()->sendMessage(&msg);
+        }
     });
 
 }
@@ -207,7 +218,9 @@ void GamePanel::initGameScene()
 
 void GamePanel::gameStatusPrecess(GameControl::GameStatus status)
 {
+    // 记录游戏状态
     m_gameStatus = status;
+    // 处理游戏状态
     switch(status)
     {
     case GameControl::DispatchCard:
@@ -215,28 +228,34 @@ void GamePanel::gameStatusPrecess(GameControl::GameStatus status)
         break;
     case GameControl::CallingLord:
     {
+        // 取出底牌数据
         CardList last3Card = m_gameCtl->getSurplusCards().toCardList();
+        // 给底牌窗口设置图片
         for(int i=0; i<last3Card.size(); ++i)
         {
             QPixmap front = m_cardMap[last3Card.at(i)]->getImage();
             m_last3Card[i]->setImage(front, m_cardBackImg);
-            m_last3Card[i]->hide();        
+            m_last3Card[i]->hide();
         }
+        // 开始叫地主
         m_gameCtl->startLordCard();
         break;
     }
     case GameControl::PlayingHand:
+        // 隐藏发牌区的底牌和移动的牌
         m_baseCard->hide();
         m_moveCard->hide();
+        // 显示留给地主的三张底牌
         for(int i=0; i<m_last3Card.size(); ++i)
         {
-
             m_last3Card.at(i)->show();
         }
         for(int i=0; i<m_playerList.size(); ++i)
         {
             PlayerContext &context = m_contextMap[m_playerList.at(i)];
+            // 隐藏各个玩家抢地主过程中的提示信息
             context.info->hide();
+            // 显示各个玩家的头像
             Player* player = m_playerList.at(i);
             QPixmap pixmap = loadRoleImage(player->getSex(), player->getDirection(), player->getRole());
             context.roleImg->setPixmap(pixmap);
@@ -251,16 +270,19 @@ void GamePanel::gameStatusPrecess(GameControl::GameStatus status)
 
 void GamePanel::startDispatchCard()
 {
+    // 重置每张卡牌的属性
     for(auto it = m_cardMap.begin(); it!= m_cardMap.end(); ++it)
     {
         it.value()->setSelected(false);
         it.value()->setFrontSide(true);
         it.value()->hide();
     }
+    // 隐藏三张底牌
     for(int i=0; i<m_last3Card.size(); ++i)
     {
         m_last3Card.at(i)->hide();
     }
+    // 重置玩家的窗口上下文信息
     int index = m_playerList.indexOf(m_gameCtl->getUserPlayer());
     for(int i=0; i<m_playerList.size(); ++i)
     {
@@ -269,10 +291,15 @@ void GamePanel::startDispatchCard()
         m_contextMap[m_playerList.at(i)].roleImg->hide();
         m_contextMap[m_playerList.at(i)].isFrontSide = i==index ? true : false;
     }
+    // 重置所有玩家的卡牌数据
     m_gameCtl->resetCardData();
+    // 显示底牌
     m_baseCard->show();
+    // 隐藏按钮面板
     ui->btnGroup->selectPanel(ButtonGroup::Empty);
+    // 启动定时器
     m_timer->start(10);
+    // 播放背景音乐
     m_bgm->playAssistMusic(BGMControl::Dispatch);
 }
 
@@ -302,31 +329,6 @@ void GamePanel::cardMoveStep(Player *player, int curPos)
     {
         m_moveCard->hide();
     }
-}
-
-void GamePanel::onDispatchCard()
-{
-    static int curMovePos = 0;
-    Player* curPlayer = m_gameCtl->getCurrentPlayer();
-    if(curMovePos >= 100)
-    {
-        Card card = m_gameCtl->takeOneCard();
-        curPlayer->storeDispatchCard(card);
-        // Cards cs(card);
-        // disposeCard(curPlayer,cs);
-        m_gameCtl->setCurrentPlayer(curPlayer->getNextPlayer());
-        curMovePos = 0;
-        cardMoveStep(curPlayer, curMovePos);
-        if(m_gameCtl->getSurplusCards().cardCount() == 3)
-        {
-            m_timer->stop();
-            gameStatusPrecess(GameControl::CallingLord);
-            m_bgm->stopAssistMusic();
-            return;
-        }
-    }
-    cardMoveStep(curPlayer, curMovePos);
-    curMovePos += 15;
 }
 
 void GamePanel::disposeCard(Player *player, const Cards &cards)
@@ -417,50 +419,6 @@ void GamePanel::updatePlayerCards(Player *player)
     }
 }
 
-void GamePanel::onPlayerStatusChanged(Player *player, GameControl::PlayerStatus status)
-{
-    switch (status)
-    {
-    case GameControl::ThinkingForCallLord:
-        if(player == m_gameCtl->getUserPlayer())
-        {
-            ui->btnGroup->selectPanel(ButtonGroup::CallLord,m_gameCtl->getPlayerMaxBet());
-        }
-        break;
-    case GameControl::ThinkingForPlayHand:
-        hidePlayerDropCards(player);
-        if(player == m_gameCtl->getUserPlayer())
-        {
-            Player* pendPlayer = m_gameCtl->getPendPlayer();
-            if(pendPlayer == m_gameCtl->getUserPlayer() || pendPlayer == nullptr)
-            {
-                ui->btnGroup->selectPanel(ButtonGroup::PlayCard);
-            }
-            else
-            {
-                ui->btnGroup->selectPanel(ButtonGroup::PassOrPlay);
-            }
-        }
-        else
-        {
-            ui->btnGroup->selectPanel(ButtonGroup::Empty);
-        }
-        break;
-    case GameControl::Winning:
-        m_bgm->stopBGM();
-        m_contextMap[m_gameCtl->getLeftRobot()].isFrontSide = true;
-        m_contextMap[m_gameCtl->getRightRobot()].isFrontSide = true;
-        updatePlayerCards(m_gameCtl->getLeftRobot());
-        updatePlayerCards(m_gameCtl->getRightRobot());
-        updatePlayerScore();
-        m_gameCtl->setCurrentPlayer(player);
-        showEndingScorePanel();
-        break;
-    default:
-        break;
-    }
-}
-
 QPixmap GamePanel::loadRoleImage(Player::Sex sex, Player::Direction direct, Player::Role role)
 {
     QVector<QString> lordMan;
@@ -503,8 +461,100 @@ QPixmap GamePanel::loadRoleImage(Player::Sex sex, Player::Direction direct, Play
     return pixmap;
 }
 
+void GamePanel::onDispatchCard()
+{
+    // 记录扑克牌的位置
+    static int curMovePos = 0;
+    // 当前玩家
+    Player* curPlayer = m_gameCtl->getCurrentPlayer();
+    if(curMovePos >= 100)
+    {
+        // 给玩家发一张牌
+        Card card = m_gameCtl->takeOneCard();
+        curPlayer->storeDispatchCard(card);
+        Cards cs(card);
+        //        disposeCard(curPlayer, cs);
+        // 切换玩家
+        m_gameCtl->setCurrentPlayer(curPlayer->getNextPlayer());
+        curMovePos = 0;
+        // 发牌动画
+        cardMoveStep(curPlayer, curMovePos);
+        // 判断牌是否发完了
+        if(m_gameCtl->getSurplusCards().cardCount() == 3)
+        {
+            // 终止定时器
+            m_timer->stop();
+            // 切换游戏状态
+            gameStatusPrecess(GameControl::CallingLord);
+            // 终止发牌音乐的播放
+            m_bgm->stopAssistMusic();
+            return;
+        }
+    }
+    // 移动扑克牌
+    cardMoveStep(curPlayer, curMovePos);
+    curMovePos += 15;
+}
+
+
+void GamePanel::onPlayerStatusChanged(Player *player, GameControl::PlayerStatus status)
+{
+    switch (status)
+    {
+    case GameControl::ThinkingForCallLord:
+        if(player == m_gameCtl->getUserPlayer())
+        {
+            ui->btnGroup->selectPanel(ButtonGroup::CallLord,m_gameCtl->getPlayerMaxBet());
+        }
+        break;
+    case GameControl::ThinkingForPlayHand:
+        // 1. 隐藏上一轮打出的牌
+        hidePlayerDropCards(player);
+        if(player == m_gameCtl->getUserPlayer())
+        {
+            Player* pendPlayer = m_gameCtl->getPendPlayer();
+            if(pendPlayer == m_gameCtl->getUserPlayer() || pendPlayer == nullptr)
+            {
+                ui->btnGroup->selectPanel(ButtonGroup::PlayCard);
+            }
+            else
+            {
+                ui->btnGroup->selectPanel(ButtonGroup::PassOrPlay);
+            }
+        }
+        else
+        {
+            ui->btnGroup->selectPanel(ButtonGroup::Empty);
+        }
+        break;
+    case GameControl::Winning:
+    {
+        m_bgm->stopBGM();
+        m_contextMap[m_gameCtl->getLeftRobot()].isFrontSide = true;
+        m_contextMap[m_gameCtl->getRightRobot()].isFrontSide = true;
+        updatePlayerCards(m_gameCtl->getLeftRobot());
+        updatePlayerCards(m_gameCtl->getRightRobot());
+        updatePlayerScore();
+        m_gameCtl->setCurrentPlayer(player);
+        showEndingScorePanel();
+        //发送信息：
+        Message msg{
+            .userName = DataManager::getInstance()->getUserName(),
+            .roomName = DataManager::getInstance()->getRoomName(),
+            .data1 = QByteArray::number(m_gameCtl->getUserPlayer()->getScore()),
+            .reqcode = RequestCode::GameOver
+        };
+        DataManager::getInstance()->getCommunication()->sendMessage(&msg);
+        break;
+    }
+    default:
+        break;
+    }
+}
+
 void GamePanel::onGrabLordBet(Player *player, int bet, bool flag)
 {
+    // 显示抢地主的信息提示
     PlayerContext context = m_contextMap[player];
     if(bet == 0)
     {
@@ -534,7 +584,7 @@ void GamePanel::onDisposePlayHand(Player *player, const Cards &cards)
     it->lastCards = cards;
     Cards& myCards = const_cast<Cards&>(cards);
     PlayHand hand(myCards);
-    //显示对于牌型动画
+    //显示对应牌型动画
     PlayHand::HandType type = hand.getHandType();
     if(type == PlayHand::Hand_Plane ||
         type == PlayHand::Hand_Plane_Two_Pair ||
@@ -630,8 +680,7 @@ void GamePanel::onCardSelected(Qt::MouseButton button)
 
 void GamePanel::onUserPlayHand()
 {
-
-
+    // 判断游戏状态
     if(m_gameStatus != GameControl::PlayingHand)
     {
         return;
@@ -656,6 +705,7 @@ void GamePanel::onUserPlayHand()
     {
         return;
     }
+    // 判断当前玩家的牌能不能压住上一家的牌
     if(m_gameCtl->getPendPlayer() != m_gameCtl->getUserPlayer())
     {
         Cards cards = m_gameCtl->getPendCards();
@@ -666,6 +716,8 @@ void GamePanel::onUserPlayHand()
     }
     m_countDown->stopCountDown();
     m_gameCtl->getUserPlayer()->playHand(cs);
+    // 通知服务器当前玩家出牌了
+    notifyOtherPlayHand(cs);
     m_selectCards.clear();
 }
 
@@ -687,6 +739,8 @@ void GamePanel::onUserPass(){
     }
     Cards empty;
     userPlayer->playHand(empty);
+    // 通知服务器当前玩家不出牌
+    notifyOtherPlayHand(empty);
     for(auto it = m_selectCards.begin(); it != m_selectCards.end(); ++it)
     {
         (*it)->setSelected(false);
@@ -789,8 +843,27 @@ void GamePanel::showEndingScorePanel()
                 panel->deleteLater();
                 animation->deleteLater();
                 ui->btnGroup->selectPanel(ButtonGroup::Empty);
-                gameStatusPrecess(GameControl::DispatchCard);
-                m_bgm->startBGM(80);
+                if(DataManager::getInstance()->isNetworkMode())
+                {
+                    Message msg;
+                    if(DataManager::getInstance()->isManualMode())
+                    {
+                        msg.roomName = DataManager::getInstance()->getRoomName();
+                        msg.reqcode = RequestCode::Continue;
+                    }
+                    else
+                    {
+                        // 自动加入房间模式, 重新开始下一轮游戏
+                        msg.reqcode = RequestCode::AutoRoom;
+                    }
+                    msg.userName = DataManager::getInstance()->getUserName();
+                    DataManager::getInstance()->getCommunication()->sendMessage(&msg);
+                }
+                else
+                {
+                    gameStatusPrecess(GameControl::DispatchCard);
+                    m_bgm->startBGM(80);
+                }
             });
 }
 
@@ -813,12 +886,123 @@ void GamePanel::initCountDown()
     });
 }
 
+void GamePanel::initGamePanel(QByteArray msg)
+{
+    int index = 1;
+    // 格式: 用户名-次序-分数#用户名-次序-分数#用户名-次序-分数#
+    qDebug() << "==============msg: " << msg;
+    orderMap order;
+    auto lst = msg.left(msg.length()-1).split('#');
+    for(const auto& item : lst)
+    {
+        auto sub = item.split('-');
+        order.insert(sub.at(1).toInt(), QPair(sub.at(0), sub.at(2).toInt()));
+        if(sub.at(0) == DataManager::getInstance()->getUserName())
+        {
+            index = sub.at(1).toInt();
+        }
+    }
+    updatePlayerInfo(order);
+    // 开始游戏
+    startGame(index);
+}
+
+void GamePanel::updatePlayerInfo(orderMap &info)
+{
+    int lscore=0, rscore=0, mscore=0;
+    QByteArray left, right, mid;
+    QByteArray current = DataManager::getInstance()->getUserName();
+    // 取玩家的名字和分数
+    if(current == info.value(1).first)
+    {
+        mid = info.value(1).first;
+        right = info.value(2).first;
+        left = info.value(3).first;
+        mscore = info.value(1).second;
+        rscore = info.value(2).second;
+        lscore = info.value(3).second;
+    }
+    else if(current == info.value(2).first)
+    {
+        mid = info.value(2).first;
+        right = info.value(3).first;
+        left = info.value(1).first;
+        mscore = info.value(2).second;
+        rscore = info.value(3).second;
+        lscore = info.value(1).second;
+    }
+    else if(current == info.value(3).first)
+    {
+        mid = info.value(3).first;
+        right = info.value(1).first;
+        left = info.value(2).first;
+        mscore = info.value(3).second;
+        rscore = info.value(1).second;
+        lscore = info.value(2).second;
+    }
+    // 将数据显示到分数面板
+    ui->scorePanel->setPlayerName(left, mid, right);
+    // 将解析出的数据设置给各个玩家
+    m_gameCtl->getLeftRobot()->setScore(lscore);
+    m_gameCtl->getRightRobot()->setScore(rscore);
+    m_gameCtl->getUserPlayer()->setScore(mscore);
+    m_gameCtl->getLeftRobot()->setName(left);
+    m_gameCtl->getRightRobot()->setName(right);
+    m_gameCtl->getUserPlayer()->setName(mid);
+    // 存储玩家的名字
+    m_nameList.clear();
+    m_nameList << left << mid << right;
+}
+
+void GamePanel::startGame()
+{
+    int index = QRandomGenerator::global()->bounded(3);
+    startGame(index+1);
+}
+
+void GamePanel::startGame(int index)
+{
+    // 设置当前被发牌的玩家
+    m_gameCtl->setCurrentPlayer(index);
+    // 界面的初始化
+    ui->btnGroup->selectPanel(ButtonGroup::Empty);
+    // m_gameCtl->clearPlayerScore();
+    updatePlayerScore();
+    // 修改游戏状态 -> 发牌
+    gameStatusPrecess(GameControl::DispatchCard);
+    // 播放背景音乐
+    m_bgm->startBGM(80);
+}
+
+
+void GamePanel::notifyOtherPlayHand(Cards &cs)
+{
+    DataManager* instance =DataManager::getInstance();
+    if(instance->isNetworkMode())
+    {
+        Message msg;
+        msg.userName = instance->getUserName();
+        msg.roomName = instance->getRoomName();
+        msg.data1 = QByteArray::number(cs.cardCount());
+        QDataStream stream(&msg.data2, QIODevice::ReadWrite);
+        // 将cs转换为容器类型
+        CardList cds = cs.toCardList();
+        for(const auto& item : cds)
+        {
+            stream << item;
+        }
+        msg.reqcode = RequestCode::PlayAHand;
+        instance->getCommunication()->sendMessage(&msg);
+    }
+}
+
 void GamePanel::paintEvent(QPaintEvent *ev)
 {
     Q_UNUSED(ev)
     QPainter p(this);
     p.drawPixmap(rect(), m_bkImage);
 }
+
 
 void GamePanel::mouseMoveEvent(QMouseEvent *ev)
 {
@@ -851,6 +1035,22 @@ void GamePanel::mouseMoveEvent(QMouseEvent *ev)
             }
         }
     }
+}
+
+void GamePanel::closeEvent(QCloseEvent *ev)
+{
+    emit panelClose();
+    // 判断游戏模式
+    if(DataManager::getInstance()->isNetworkMode())
+    {
+        Message msg;
+        msg.reqcode = RequestCode::LeaveRoom;
+        msg.userName = DataManager::getInstance()->getUserName();
+        msg.roomName = DataManager::getInstance()->getRoomName();
+        DataManager::getInstance()->getCommunication()->sendMessage(&msg);
+    }
+    ev->accept();
+    deleteLater();
 }
 
 
