@@ -19,7 +19,7 @@ GameMode::GameMode(QWidget *parent)
     // 取出通信类的实例对象
     Communication* comm = DataManager::getInstance()->getCommunication();
     connect(comm, &Communication::playerCount, this, [=](int count){
-        showInfo(count);
+        showInfo(count-1);
         ui->information->setVisible(true);
     });
 
