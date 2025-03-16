@@ -1,6 +1,5 @@
 #include "Channel.h"
 #include <stdlib.h>
-
 Channel::Channel(int fd, FDEvent events, handleFunc readFunc, handleFunc writeFunc, handleFunc destroyFunc, void* arg)
 {
     m_arg = arg;
@@ -27,4 +26,13 @@ void Channel::writeEventEnable(bool flag)
 bool Channel::isWriteEventEnable()
 {
     return m_events & (int)FDEvent::WriteEvent;
+}
+
+bool Channel::isReadEventEnable() {
+    return m_events & (int)FDEvent::ReadEvent;
+}
+
+void Channel::setCurrentEvent(FDEvent ev)
+{
+    m_events = static_cast<int>(ev);
 }

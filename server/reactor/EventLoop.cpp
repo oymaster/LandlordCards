@@ -1,13 +1,14 @@
 #include "EventLoop.h"
+#include "EpollDispatcher.h"
+#include <assert.h>
+#include "EventLoop.h"
 #include <assert.h>
 #include <sys/socket.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "SelectDispatcher.h"
-#include "PollDispatcher.h"
-#include "EpollDispatcher.h"
+
 
 EventLoop::EventLoop() : EventLoop(string())
 {
@@ -18,7 +19,7 @@ EventLoop::EventLoop(const string threadName)
     m_isQuit = true;    // 默认没有启动
     m_threadID = this_thread::get_id();
     m_threadName = threadName == string() ? "MainThread" : threadName;
-    m_dispatcher = new SelectDispatcher(this);
+    m_dispatcher = new EpollDispatcher(this);
     // map
     m_channelMap.clear();
     int ret = socketpair(AF_UNIX, SOCK_STREAM, 0, m_socketPair);
@@ -35,7 +36,7 @@ EventLoop::EventLoop(const string threadName)
     // 绑定 - bind
     auto obj = bind(&EventLoop::readMessage, this);
     Channel* channel = new Channel(m_socketPair[1], FDEvent::ReadEvent,
-        obj, nullptr, nullptr, this);
+                                   obj, nullptr, nullptr, this);
 #endif
     // channel 添加到任务队列
     addTask(channel, ElemType::ADD);

@@ -1,8 +1,4 @@
 #include "HttpResponse.h"
-#include <strings.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
 
 HttpResponse::HttpResponse()
 {
@@ -43,7 +39,6 @@ void HttpResponse::prepareMsg(Buffer* sendBuf, int socket)
 #ifndef MSG_SEND_AUTO
     sendBuf->sendData(socket);
 #endif
-
     // 回复的数据
     sendDataFunc(m_fileName, sendBuf, socket);
 }

@@ -1,8 +1,9 @@
-#include <stdio.h>
+#include <cstdio>
 #include <unistd.h>
 #include <stdlib.h>
 #include "TcpServer.h"
-#include "Mytest.h"
+#include <stdio.h>
+
 
 int main(int argc, char* argv[])
 {
@@ -14,16 +15,16 @@ int main(int argc, char* argv[])
     }
     unsigned short port = atoi(argv[1]);
     // 切换服务器的工作路径
-    chdir(argv[2]);
+    // chdir(argv[2]);
 #else
-    unsigned short port = 10000;
-    chdir("/home/robin/luffy");
+    unsigned short port = 8888;
+    //chdir(" ");
 #endif
     // 启动服务器
-//    TcpServer* server = new TcpServer(port, 4);
-//    server->run();
-    Mytest t;
-    t.test();
+    TcpServer* server = new TcpServer(port, 4);
+    server->run();
+//    MyTest t;
+//    t.test();
 
     return 0;
 }

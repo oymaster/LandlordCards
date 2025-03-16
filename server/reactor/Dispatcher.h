@@ -21,7 +21,7 @@ public:
     {
         m_channel = channel;
     }
-    protected:
+protected:
     string m_name = string();
     Channel* m_channel;
     EventLoop* m_evLoop;

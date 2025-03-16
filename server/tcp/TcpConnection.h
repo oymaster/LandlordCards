@@ -4,14 +4,19 @@
 #include "Channel.h"
 #include "HttpRequest.h"
 #include "HttpResponse.h"
-
-//#define MSG_SEND_AUTO
-
+#include  "Communication.h"
+class  Communication;
 class TcpConnection
 {
 public:
     TcpConnection(int fd, EventLoop* evloop);
     ~TcpConnection();
+
+    //准备密钥的函数
+    void prepareSecretKey();
+
+    void addWriteTask(std::string data);
+    void addDeleteTask();
 
     static int processRead(void* arg);
     static int processWrite(void* arg);
@@ -22,7 +27,7 @@ private:
     Channel* m_channel;
     Buffer* m_readBuf;
     Buffer* m_writeBuf;
+    Communication* m_reply = nullptr;
     // http 协议
-    HttpRequest* m_request;
-    HttpResponse* m_response;
 };
+

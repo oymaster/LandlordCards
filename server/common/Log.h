@@ -2,12 +2,12 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-#define  DEBUG   1  
+#define  DEBUG   1
 
 #if DEBUG
 /*
 *  如果不加 do ... while(0) 在进行条件判断的时候(只有一句话), 省略了{}, 就会出现语法错误
-*  if 
+*  if
 *     xxxxx
 *  else
 *     xxxxx

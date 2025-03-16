@@ -7,9 +7,7 @@
 #include <mutex>
 using namespace std;
 
-// 处理该节点中的channel的方式
-enum class ElemType:char{ADD, DELETE, MODIFY};
-// 定义任务队列的节点
+enum class ElemType :char { ADD, DELETE, MODIFY };
 struct ChannelElement
 {
     ElemType type;   // 如何处理该节点中的channel
@@ -51,7 +49,6 @@ public:
 
 private:
     void taskWakeup();
-
 private:
     bool m_isQuit;
     // 该指针指向子类的实例 epoll, poll, select
@@ -65,6 +62,7 @@ private:
     string m_threadName;
     mutex m_mutex;
     int m_socketPair[2];  // 存储本地通信的fd 通过socketpair 初始化
-};
 
+
+};
 

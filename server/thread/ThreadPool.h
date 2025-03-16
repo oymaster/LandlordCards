@@ -5,7 +5,6 @@
 #include <vector>
 using namespace std;
 
-// 定义线程池
 class ThreadPool
 {
 public:
@@ -23,4 +22,3 @@ private:
     vector<WorkerThread*> m_workerThreads;
     int m_index;
 };
-

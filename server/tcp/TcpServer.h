@@ -10,8 +10,8 @@ public:
     void setListen();
     // 启动服务器
     void run();
+    void saveRsaKey();
     static int acceptConnection(void* arg);
-
 private:
     int m_threadNum;
     EventLoop* m_mainLoop;

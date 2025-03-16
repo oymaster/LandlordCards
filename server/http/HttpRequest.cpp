@@ -1,4 +1,3 @@
-//#define _GNU_SOURCE
 #include "HttpRequest.h"
 #include <stdio.h>
 #include <strings.h>
@@ -8,10 +7,9 @@
 #include <dirent.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include "TcpConnection.h"
+//#include "TcpConnection.h"
 #include <assert.h>
 #include <ctype.h>
-
 char* HttpRequest::splitRequestLine(const char* start, const char* end, const char* sub, function<void(string)> callback)
 {
     char* space = const_cast<char*>(end);
@@ -24,9 +22,6 @@ char* HttpRequest::splitRequestLine(const char* start, const char* end, const ch
     callback(string(start, length));
     return space + 1;
 }
-
-
-// 将字符转换为整形数
 int HttpRequest::hexToDec(char c)
 {
     if (c >= '0' && c <= '9')
@@ -35,10 +30,8 @@ int HttpRequest::hexToDec(char c)
         return c - 'a' + 10;
     if (c >= 'A' && c <= 'F')
         return c - 'A' + 10;
-
     return 0;
 }
-
 HttpRequest::HttpRequest()
 {
     reset();
@@ -142,16 +135,16 @@ bool HttpRequest::parseHttpRequest(Buffer* readBuf, HttpResponse* response, Buff
     {
         switch (m_curState)
         {
-        case PrecessState::ParseReqLine:
-            flag = parseRequestLine(readBuf);
-            break;
-        case PrecessState::ParseReqHeaders:
-            flag = parseRequestHeader(readBuf);
-            break;
-        case PrecessState::ParseReqBody:
-            break;
-        default:
-            break;
+            case PrecessState::ParseReqLine:
+                flag = parseRequestLine(readBuf);
+                break;
+            case PrecessState::ParseReqHeaders:
+                flag = parseRequestHeader(readBuf);
+                break;
+            case PrecessState::ParseReqBody:
+                break;
+            default:
+                break;
         }
         if (!flag)
         {
@@ -316,14 +309,14 @@ void HttpRequest::sendDir(string dirName, Buffer* sendBuf, int cfd)
         {
             // a标签 <a href="">name</a>
             sprintf(buf + strlen(buf),
-                "<tr><td><a href=\"%s/\">%s</a></td><td>%ld</td></tr>",
-                name, name, st.st_size);
+                    "<tr><td><a href=\"%s/\">%s</a></td><td>%ld</td></tr>",
+                    name, name, st.st_size);
         }
         else
         {
             sprintf(buf + strlen(buf),
-                "<tr><td><a href=\"%s\">%s</a></td><td>%ld</td></tr>",
-                name, name, st.st_size);
+                    "<tr><td><a href=\"%s\">%s</a></td><td>%ld</td></tr>",
+                    name, name, st.st_size);
         }
         // send(cfd, buf, strlen(buf), 0);
         sendBuf->appendString(buf);
@@ -344,7 +337,6 @@ void HttpRequest::sendDir(string dirName, Buffer* sendBuf, int cfd)
 
 void HttpRequest::sendFile(string fileName, Buffer* sendBuf, int cfd)
 {
-    // 1. 打开文件
     int fd = open(fileName.data(), O_RDONLY);
     assert(fd > 0);
 #if 1
@@ -386,3 +378,6 @@ void HttpRequest::sendFile(string fileName, Buffer* sendBuf, int cfd)
 #endif
     close(fd);
 }
+
+
+

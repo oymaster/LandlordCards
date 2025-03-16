@@ -1,4 +1,3 @@
-//#define _GNU_SOURCE
 #include "Buffer.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,8 +6,9 @@
 #include <unistd.h>
 #include <strings.h>
 #include <sys/socket.h>
-
-Buffer::Buffer(int size):m_capacity(size)
+#include <netinet/in.h>
+#include "Log.h"
+Buffer::Buffer(int size) :m_capacity(size)
 {
     m_data = (char*)malloc(size);
     bzero(m_data, size);
@@ -22,18 +22,14 @@ Buffer::~Buffer()
     }
 }
 
-void Buffer::extendRoom(int size)
+void Buffer::extendRoom(int size)//扩容
 {
-    // 1. 内存够用 - 不需要扩容
     if (writeableSize() >= size)
     {
         return;
     }
-    // 2. 内存需要合并才够用 - 不需要扩容
-    // 剩余的可写的内存 + 已读的内存 > size
     else if (m_readPos + writeableSize() >= size)
     {
-        // 得到未读的内存大小
         int readable = readableSize();
         // 移动内存
         memcpy(m_data, m_data + m_readPos, readable);
@@ -41,7 +37,6 @@ void Buffer::extendRoom(int size)
         m_readPos = 0;
         m_writePos = readable;
     }
-    // 3. 内存不够用 - 扩容
     else
     {
         void* temp = realloc(m_data, m_capacity + size);
@@ -55,6 +50,8 @@ void Buffer::extendRoom(int size)
         m_capacity += size;
     }
 }
+
+
 
 int Buffer::appendString(const char* data, int size)
 {
@@ -79,20 +76,18 @@ int Buffer::appendString(const char* data)
 
 int Buffer::appendString(const string data)
 {
-    int ret = appendString(data.data());
+    int ret = appendString(data.c_str(),data.size());
     return ret;
 }
 
 int Buffer::socketRead(int fd)
 {
-    // read/recv/readv
     struct iovec vec[2];
-    // 初始化数组元素
     int writeable = writeableSize();
     vec[0].iov_base = m_data + m_writePos;
     vec[0].iov_len = writeable;
     char* tmpbuf = (char*)malloc(40960);
-    vec[1].iov_base = m_data + m_writePos;
+    vec[1].iov_base = tmpbuf;
     vec[1].iov_len = 40960;
     int result = readv(fd, vec, 2);
     if (result == -1)
@@ -120,7 +115,6 @@ char* Buffer::findCRLF()
 
 int Buffer::sendData(int socket)
 {
-    // 判断有无数据
     int readable = readableSize();
     if (readable > 0)
     {
@@ -134,4 +128,20 @@ int Buffer::sendData(int socket)
     }
     return 0;
 }
+int Buffer::appendHead(const int length)
+{
+    Debug("小端数据长度%d",length);
+    int len = htonl(length);
+    Debug("大端数据长度%d",len);
+    string head(reinterpret_cast<char*>(&len),sizeof(int));
+    appendString(head);
+    return 0;
+}
+int Buffer::appendPackage(const string data)
+{
+    appendHead(data.size());
+    appendString(data);
+    return 0;
+}
+
 

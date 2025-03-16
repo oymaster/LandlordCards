@@ -4,7 +4,6 @@
 #include <functional>
 using namespace std;
 
-// 定义状态码枚举
 enum class StatusCode
 {
     Unknown,
@@ -15,7 +14,7 @@ enum class StatusCode
     NotFound = 404
 };
 
-// 定义结构体
+
 class HttpResponse
 {
 public:
@@ -42,11 +41,11 @@ private:
     map<string, string> m_headers;
     // 定义状态码和描述的对应关系
     const map<int, string> m_info = {
-        {200, "OK"},
-        {301, "MovedPermanently"},
-        {302, "MovedTemporarily"},
-        {400, "BadRequest"},
-        {404, "NotFound"},
+            {200, "OK"},
+            {301, "MovedPermanently"},
+            {302, "MovedTemporarily"},
+            {400, "BadRequest"},
+            {404, "NotFound"},
     };
 };
 
